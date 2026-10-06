@@ -1,0 +1,94 @@
+# Pipeline del backend: lint -> migraciones -> tests, en cada push y pull request.
+# Guía: docs/infraestructura_produccion_sprint4.md (sección 5).
+name: backend
+
+on:
+  push:
+  pull_request:
+
+# Un push nuevo a la misma rama cancela la corrida anterior que siga en curso.
+concurrency:
+  group: backend-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  PYTHON_VERSION: "3.14"
+
+jobs:
+  lint:
+    name: Lint (ruff)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Instalar ruff (misma versión que requirements-dev.txt)
+        run: pip install "$(grep -E '^ruff==' requirements-dev.txt)"
+
+      - name: ruff check
+        run: ruff check . --output-format=github
+
+  tests:
+    name: Tests (pytest + PostgreSQL 17)
+    needs: lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    # PostgreSQL real como contenedor de servicio. conftest.py lo usa en lugar de
+    # pgembed cuando existe TEST_POSTGRES_URI.
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      TEST_POSTGRES_URI: postgresql://postgres:postgres@localhost:5432/postgres
+      PYTHONIOENCODING: utf-8
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
+
+      - name: Instalar dependencias
+        run: pip install -r requirements-dev.txt
+
+      - name: Migraciones aplicables (SQL offline de Alembic)
+        # Valida que las migraciones generen SQL sin errores, sin tocar ninguna base.
+        env:
+          DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/postgres
+        run: alembic upgrade head --sql > migraciones.sql && wc -l migraciones.sql
+
+      - name: pytest
+        run: pytest -v --junitxml=reportes/junit.xml
+
+      - name: Publicar reporte de tests
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reporte-pytest
+          path: |
+            reportes/junit.xml
+            migraciones.sql
+          retention-days: 14

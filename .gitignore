@@ -1,0 +1,48 @@
+# --- Secretos y configuración local (NUNCA versionar) ---
+.env
+.env.*
+!.env.example
+
+# --- Entornos virtuales ---
+venv/
+.venv/
+env/
+ENV/
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+.eggs/
+build/
+dist/
+pip-wheel-metadata/
+
+# --- Pruebas y cobertura ---
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+.hypothesis/
+
+# --- Linters y tipado ---
+.mypy_cache/
+.ruff_cache/
+.pyre/
+.dmypy.json
+
+# --- IDEs y sistema operativo ---
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- Logs y datos locales ---
+*.log
+pgdata/

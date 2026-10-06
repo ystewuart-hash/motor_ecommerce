@@ -1,0 +1,10 @@
+Migraciones del esquema (Alembic). Guía completa: docs/infraestructura_produccion_sprint4.md
+
+  alembic upgrade head                 aplica todo lo pendiente
+  alembic current                      revisión aplicada en la base
+  alembic history                      historial de migraciones
+  alembic check                        falla si los modelos y la base difieren
+  python -m scripts.generar_migracion "mensaje"   nueva migración (autogenerate)
+
+versions/  migraciones activas.
+legacy/    scripts SQL manuales previos a Alembic (solo para bases antiguas; ver la guía).

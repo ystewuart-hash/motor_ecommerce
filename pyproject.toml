@@ -1,0 +1,55 @@
+[project]
+name = "motor-ecommerce"
+version = "1.0.0"
+description = "Motor E-Commerce Headless: FastAPI + SQLAlchemy + PostgreSQL"
+requires-python = ">=3.14"
+
+# ----------------------------------------------------------------------------
+# pytest
+# ----------------------------------------------------------------------------
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-ra --strict-markers"
+markers = [
+    "demostracion: pruebas que demuestran un problema (ej. sobreventa sin bloqueo), no una garantía del sistema",
+    "lento: pruebas que esperan timeouts reales (varios segundos)",
+]
+filterwarnings = [
+    "error::DeprecationWarning:(core|services|routers|schemas|models|errores|main|database|dependencies)",
+    # slowapi 0.1.10 usa asyncio.iscoroutinefunction (se elimina en Python 3.16).
+    "ignore:'asyncio.iscoroutinefunction' is deprecated:DeprecationWarning",
+]
+
+# ----------------------------------------------------------------------------
+# ruff (linter)
+# ----------------------------------------------------------------------------
+[tool.ruff]
+line-length = 120
+target-version = "py314"
+extend-exclude = ["venv"]
+
+[tool.ruff.lint]
+select = [
+    "E", "W",   # pycodestyle
+    "F",        # pyflakes: imports y variables sin usar, nombres indefinidos
+    "I",        # orden de imports
+    "B",        # bugbear: errores comunes
+    "UP",       # sintaxis moderna de Python
+    "BLE",      # except Exception sin justificar
+]
+ignore = [
+    "B008",     # Depends()/Query() en defaults es el patrón de FastAPI
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Migraciones autogeneradas: líneas largas y estilo del generador de Alembic.
+"alembic/versions/*.py" = ["E501"]
+
+[tool.ruff.lint.isort]
+# La carpeta alembic/ del proyecto no debe confundirse con la librería alembic.
+known-third-party = ["alembic"]
+known-first-party = [
+    "core", "models", "schemas", "services", "routers",
+    "database", "dependencies", "errores", "main", "scripts", "tests",
+]

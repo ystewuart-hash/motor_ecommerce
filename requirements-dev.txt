@@ -1,0 +1,7 @@
+-r requirements.txt
+# Pruebas y calidad
+pytest==9.1.1
+ruff==0.16.10
+# PostgreSQL embebido para tests locales y scripts/generar_migracion.py
+# (en CI se usa un contenedor postgres; ver .github/workflows/backend.yml)
+pgembed==0.2.0
